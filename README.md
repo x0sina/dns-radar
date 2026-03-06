@@ -1,4 +1,4 @@
-# DNS Radar (Go)
+# DNS Radar
 
 Find DNS resolvers that work for `dnstt/slipstream` long-domain TXT traffic.
 
