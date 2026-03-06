@@ -2,7 +2,6 @@
 .env
 good.txt
 good.csv
-ips.txt
 
 # Build artifacts
 bin/
