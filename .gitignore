@@ -1,0 +1,14 @@
+# Local environment and outputs
+.env
+good.txt
+good.csv
+ips.txt
+
+# Build artifacts
+bin/
+dns-radar
+dns-radar.exe
+*.log
+
+# OS noise
+.DS_Store
