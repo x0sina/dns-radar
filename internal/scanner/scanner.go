@@ -140,7 +140,7 @@ func (s *Scanner) scanAll(
 		IP    string
 	}
 
-	jobs := make(chan job)
+	jobs := make(chan job, workerCount)
 	var wg sync.WaitGroup
 	var errMu sync.Mutex
 	var firstErr error
@@ -163,10 +163,6 @@ func (s *Scanner) scanAll(
 		go func() {
 			defer wg.Done()
 			for j := range jobs {
-				if scanCtx.Err() != nil {
-					return
-				}
-
 				result := s.scanIP(scanCtx, j.IP)
 				results[j.Index] = result
 
@@ -184,26 +180,23 @@ func (s *Scanner) scanAll(
 		}()
 	}
 
-	for index, ip := range ips {
-		select {
-		case <-scanCtx.Done():
-			close(jobs)
-			wg.Wait()
-			if firstErr != nil {
-				return results, firstErr
+	go func() {
+		defer close(jobs)
+		for index, ip := range ips {
+			select {
+			case <-scanCtx.Done():
+				return
+			case jobs <- job{Index: index, IP: ip}:
 			}
-			if err := scanCtx.Err(); err != nil && err != context.Canceled {
-				return results, err
-			}
-			return results, nil
-		case jobs <- job{Index: index, IP: ip}:
 		}
-	}
+	}()
 
-	close(jobs)
 	wg.Wait()
 	if firstErr != nil {
 		return results, firstErr
+	}
+	if err := scanCtx.Err(); err != nil && err != context.Canceled {
+		return results, err
 	}
 	return results, nil
 }
